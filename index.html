@@ -30,6 +30,7 @@
     color-scheme: dark;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
   html, body { margin: 0; background: var(--bg); color: var(--text); overflow-x: hidden; }
   body {
     font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
@@ -73,6 +74,30 @@
   }
   .banner.error { background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); }
   .banner svg { flex: none; width: 22px; height: 22px; }
+
+  /* --- playlist du jour --------------------------------------------------- */
+  .today {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 16px; padding: 14px 16px;
+    border-radius: 22px; text-decoration: none; color: var(--text);
+    background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line);
+    transition: transform .08s;
+  }
+  .today:active { transform: scale(0.985); }
+  .today.live {
+    background: linear-gradient(90deg, #1db954, #17a34a); border-color: transparent;
+    box-shadow: 0 12px 30px rgba(29, 185, 84, 0.30);
+  }
+  .today-icon {
+    flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
+    background: rgba(255, 255, 255, 0.10);
+  }
+  .today.live .today-icon { background: #fff; color: #17a34a; }
+  .today-icon svg { width: 22px; height: 22px; }
+  .today-txt { flex: 1; min-width: 0; }
+  .today-title { display: block; font-size: 17px; font-weight: 750; }
+  .today-sub { display: block; font-size: 14px; color: var(--muted); margin-top: 2px; }
+  .today.live .today-sub { color: rgba(255, 255, 255, 0.85); }
+  .today .chev { flex: none; width: 20px; height: 20px; opacity: .7; }
 
   /* --- carte des radios --------------------------------------------------- */
   .card {
@@ -221,6 +246,15 @@
     <span id="bannerText"></span>
   </div>
 
+  <a class="today" id="today" hidden>
+    <span class="today-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></span>
+    <span class="today-txt">
+      <span class="today-title" id="todayTitle"></span>
+      <span class="today-sub" id="todaySub"></span>
+    </span>
+    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+  </a>
+
   <section class="card" aria-labelledby="listTitle">
     <div class="card-head">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 11v.01M8.5 14.5a5 5 0 0 1 0-7M15.5 7.5a5 5 0 0 1 0 7M5.6 17.4a9 9 0 0 1 0-12.8M18.4 4.6a9 9 0 0 1 0 12.8"/><path d="M12 11l-4 11M12 11l4 11M9.5 17.5h5"/></svg>
@@ -329,6 +363,36 @@
       r = await gh(`/actions/variables`, { method: "POST", body: { name: CONFIG.variable, value } });
     }
     if (!r.ok) throw new GhError(r.status, messageFor(r.status));
+  }
+
+  async function readLastPlaylist() {
+    const r = await gh(`/actions/variables/LAST_PLAYLIST`);
+    if (!r.ok) return null;                           // pas encore publié (ou pas de droit) : carte masquée
+    try { return JSON.parse((await r.json()).value); } catch { return null; }
+  }
+
+  function parisToday() {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(new Date());  // AAAA-MM-JJ
+  }
+
+  function renderToday(info) {
+    const el = $("today");
+    if (!info || !/^[0-9A-Za-z]{22}$/.test(info.id || "")) { el.hidden = true; return; }
+    const isToday = info.date === parisToday();
+    const n = Number(info.count) || 0;
+    // Le lien « spotify: » ouvre directement l'app Spotify (plus fiable qu'un lien web depuis une web app iOS).
+    el.href = `spotify:playlist:${info.id}`;
+    el.classList.toggle("live", isToday);
+    $("todayTitle").textContent = isToday ? "Écouter la playlist du jour" : "La playlist du jour arrive vers 8h30";
+    $("todaySub").textContent = isToday
+      ? `${info.name} · ${n} journa${n > 1 ? "ux" : "l"}`
+      : `En attendant : réécouter celle du ${info.name}`;
+    el.hidden = false;
+  }
+
+  async function refreshToday() {
+    if (!store.get(TOKEN_KEY)) { renderToday(null); return; }
+    try { renderToday(await readLastPlaylist()); } catch { /* hors ligne : on garde l'affichage */ }
   }
 
   async function checkToken(token) {
@@ -460,13 +524,13 @@
     }
     status.className = "status ok"; status.textContent = "Clé valide ✓";
     setTimeout(closeSettings, 600);
-    await loadSaved();
+    await Promise.all([loadSaved(), refreshToday()]);
   }
 
   // --- chargement / enregistrement --------------------------------------------
   async function loadSaved() {
     if (!store.get(TOKEN_KEY)) {
-      banner("Première utilisation : touche ici pour coller la clé d'accès.");
+      banner("");          // pas de bandeau : la roue dentée suffit (et « Enregistrer » ouvre les réglages)
       renderMeta();
       return;
     }
@@ -506,14 +570,14 @@
   async function init() {
     $("repoInfo").textContent = `Repo ${CONFIG.owner}/${CONFIG.repo} · variable ${CONFIG.variable}`;
     $("openSettings").addEventListener("click", openSettings);
-    $("banner").addEventListener("click", () => (store.get(TOKEN_KEY) ? loadSaved() : openSettings()));
+    $("banner").addEventListener("click", () => (store.get(TOKEN_KEY) ? loadSaved() : openSettings()));  // erreurs uniquement
     $("overlay").addEventListener("click", closeSettings);
     $("saveToken").addEventListener("click", validateToken);
     $("token").addEventListener("keydown", (e) => { if (e.key === "Enter") validateToken(); });
     $("forget").addEventListener("click", () => {
       store.del(TOKEN_KEY); $("token").value = "";
       $("tokenStatus").className = "status"; $("tokenStatus").textContent = "Clé oubliée.";
-      state.saved = null; loadSaved();
+      state.saved = null; loadSaved(); renderToday(null);
     });
     $("save").addEventListener("click", save);
 
@@ -527,7 +591,9 @@
     }
     state.selected = new Set(state.catalog.filter((r) => r.default).map((r) => r.id));
     renderList();
-    await loadSaved();
+    await Promise.all([loadSaved(), refreshToday()]);
+    // L'appli installée reste en mémoire : on rafraîchit le lien quand elle revient au premier plan.
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshToday(); });
   }
 
   init();
