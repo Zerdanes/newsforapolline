@@ -71,6 +71,13 @@
       "default": false
     },
     {
+      "id": "sur-le-fil",
+      "name": "Sur le fil (AFP)",
+      "subtitle": "La semaine vue par l'AFP · un épisode le week-end",
+      "image": "img/sur-le-fil.jpg",
+      "default": false
+    },
+    {
       "id": "heure-du-monde",
       "name": "L'Heure du Monde",
       "subtitle": "Le podcast quotidien du Monde",
