@@ -1,0 +1,81 @@
+{
+  "radios": [
+    {
+      "id": "france-inter",
+      "name": "France Inter",
+      "subtitle": "Le journal de 7h",
+      "image": "img/france-inter.jpg",
+      "default": true
+    },
+    {
+      "id": "france-inter-8h",
+      "name": "France Inter · 8h",
+      "subtitle": "Le journal de 8h",
+      "image": "img/france-inter-8h.jpg",
+      "default": false
+    },
+    {
+      "id": "rtl",
+      "name": "RTL",
+      "subtitle": "Le journal de 7h",
+      "image": "img/rtl.jpg",
+      "default": true
+    },
+    {
+      "id": "europe1",
+      "name": "Europe 1",
+      "subtitle": "Le journal de 7h",
+      "image": "img/europe1.jpg",
+      "default": true
+    },
+    {
+      "id": "rmc",
+      "name": "RMC",
+      "subtitle": "Le journal de 7h (sinon l'heure 7h-8h d'Apolline Matin)",
+      "image": "img/rmc.jpg",
+      "default": false
+    },
+    {
+      "id": "franceinfo",
+      "name": "franceinfo",
+      "subtitle": "Ça dit quoi ? · l'actu du matin en 5 min",
+      "image": "img/franceinfo.jpg",
+      "default": true
+    },
+    {
+      "id": "france-culture",
+      "name": "France Culture",
+      "subtitle": "Le journal de 7h",
+      "image": "img/france-culture.jpg",
+      "default": true
+    },
+    {
+      "id": "radio-classique",
+      "name": "Radio Classique",
+      "subtitle": "Le journal de 7h (en semaine)",
+      "image": "img/radio-classique.jpg",
+      "default": false
+    },
+    {
+      "id": "rfi",
+      "name": "RFI",
+      "subtitle": "Le journal monde de 7h",
+      "image": "img/rfi.jpg",
+      "default": false
+    },
+    {
+      "id": "hugodecrypte",
+      "name": "HugoDécrypte",
+      "subtitle": "Les actus, publiées la veille au soir",
+      "image": "img/hugodecrypte.jpg",
+      "default": false
+    },
+    {
+      "id": "heure-du-monde",
+      "name": "L'Heure du Monde",
+      "subtitle": "Le podcast quotidien du Monde",
+      "image": "img/heure-du-monde.jpg",
+      "default": true
+    }
+  ]
+}
